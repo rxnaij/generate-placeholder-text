@@ -5,7 +5,21 @@ const placeholderText = `Lorem ipsum dolor sit amet, consectetur adipiscing elit
 
 const currentSelection = figma.currentPage.selection[0]
 
-if (currentSelection.type === 'TEXT') {
+if (!currentSelection) {
+  Promise.resolve(
+    figma.loadFontAsync({ family: 'Roboto', style: 'Regular' }),
+  ).then(() => {
+    const node = figma.createText()
+
+    node.resize(250, 285)
+    node.textAutoResize = "HEIGHT"
+    node.fontName = { family: 'Roboto', style: 'Regular' }
+    node.fontSize = 16
+    node.characters = placeholderText
+    node.x = figma.viewport.center.x
+    node.y = figma.viewport.center.y
+  })
+} else if (currentSelection.type === 'TEXT') {
   if (!currentSelection.hasMissingFont) {
     // Check for if all fonts are loaded first
     const fonts = currentSelection.getRangeAllFontNames(0, currentSelection.characters.length)

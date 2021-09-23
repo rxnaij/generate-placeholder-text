@@ -1,0 +1,9 @@
+{
+  "name": "Generate Placeholder Text",
+  "id": "1022744188040560638",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": [
+    "figma"
+  ]
+}

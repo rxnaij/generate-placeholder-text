@@ -48,17 +48,23 @@ if (!currentSelection) {
   ).then(() => {
     const node = figma.createText()
 
+    // Add text box as a sibling of the selection.
+    currentSelection.parent.appendChild(node)
+    
+    // Position text box directly atop selection.
+    node.x = currentSelection.x
+    node.y = currentSelection.y
+
     // Customize the appearance of the text box.
     node.characters = placeholderText
     node.resize(250, 285)
     node.textAutoResize = "HEIGHT"
     node.fontName = { family: 'Roboto', style: 'Regular' }
     node.fontSize = 16
-    node.x = currentSelection.x
-    node.y = currentSelection.y
 
     // Shift focus to the newly created text box.
     figma.currentPage.selection = [node]
+    
   })
 }
 

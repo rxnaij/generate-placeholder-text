@@ -20,30 +20,34 @@ function main() {
     Promise.resolve(
       // Load the font.
       figma.loadFontAsync({ family: 'Roboto', style: 'Regular' })
-    ).then(() => {
-      // Create the text box.
-      const node = figma.createText()
+    )
+      .then(() => {
+        // Create the text box.
+        const node = figma.createText()
 
-      // Position the text in the center of the viewport.
-      node.x = figma.viewport.center.x
-      node.y = figma.viewport.center.y
+        // Position the text in the center of the viewport.
+        node.x = figma.viewport.center.x
+        node.y = figma.viewport.center.y
 
-      // Customize the appearance of the text box.
-      setDefaultTextStyles(node, placeholderText)
+        // Customize the appearance of the text box.
+        setDefaultTextStyles(node, placeholderText)
 
-      // Shift focus to the newly created text box.
-      figma.currentPage.selection = [node]
-    })
-    .then(() => {
-      figma.closePlugin()
-    })
+        // Shift focus to the newly created text box.
+        figma.currentPage.selection = [node]
+      })
+      .then(() => {
+        figma.closePlugin()
+      })
   } else if (currentSelection.type === 'TEXT') {    // If a textbox is selected, replaces its content with placeholder text
     // Check if all fonts are loaded.
     if (!currentSelection.hasMissingFont) {
-      const fonts = currentSelection.getRangeAllFontNames(0, currentSelection.characters.length)
-      
       // Load all fonts in the textbox.
-      Promise.all(fonts.map(font => figma.loadFontAsync(font)))
+      Promise.all(
+        // If there's more than one font, load all of them.
+        currentSelection.fontName === figma.mixed
+         ? currentSelection.getRangeAllFontNames(0, currentSelection.characters.length).map(font => figma.loadFontAsync(font))
+         : [figma.loadFontAsync(currentSelection.fontName)]
+      )
       // TODO: if font loading fails, catch error and set default styles to textbox
         .then(() => {
           // Replace the text content.
@@ -61,25 +65,26 @@ function main() {
     Promise.resolve(
       // Load the font.
       figma.loadFontAsync({ family: 'Roboto', style: 'Regular' })
-    ).then(() => {
-      const node = figma.createText()
+    )
+      .then(() => {
+        const node = figma.createText()
 
-      // Add text box as a sibling of the selection.
-      currentSelection.parent.appendChild(node)
+        // Add text box as a sibling of the selection.
+        currentSelection.parent.appendChild(node)
 
-      // Position text box directly atop selection.
-      node.x = currentSelection.x
-      node.y = currentSelection.y
+        // Position text box directly atop selection.
+        node.x = currentSelection.x
+        node.y = currentSelection.y
 
-      // Customize the appearance of the text box.
-      setDefaultTextStyles(node, placeholderText)
+        // Customize the appearance of the text box.
+        setDefaultTextStyles(node, placeholderText)
 
-      // Shift focus to the newly created text box.
-      figma.currentPage.selection = [node]
-    })
-    .then(() => {
-      figma.closePlugin()
-    })
+        // Shift focus to the newly created text box.
+        figma.currentPage.selection = [node]
+      })
+      .then(() => {
+        figma.closePlugin()
+      })
   }
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "generate-placeholder-text",
   "version": "1.0.0",
-  "description": "Your Figma plugin",
+  "description": "Automatically generate placeholder text in Figma documents.",
   "main": "code.js",
   "scripts": {
     "dev": "npx webpack --mode=development --watch",

@@ -1,12 +1,25 @@
-const placeholderText = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`
+import { placeholderText } from "./text"
 
-// Applies a default set of text styles to node.
-function setDefaultTextStyles(node: TextNode, text: string) {
-  node.characters = text
-  node.resize(250, 285)
-  node.textAutoResize = "HEIGHT"
-  node.fontName = { family: 'Roboto', style: 'Regular' }
+const defaultFont = {
+  family: 'Roboto',
+  style: 'Regular'
+}
+
+/**
+ * Apply a default text style to a text node.
+ * Remember to only call this inside a Promise when 
+ * @param node the TextNode to apply text styles to
+ * @param text a string of text content
+ * @param resize whether a default size should be applied to the text
+ */
+function setDefaultTextStyles(node: TextNode, text: string, resize?: boolean) {
+  node.fontName = defaultFont
+  if (resize) {
+    node.resize(250, 285)
+  }
+  node.textAutoResize = "TRUNCATE"
   node.fontSize = 16
+  node.characters = text
 }
 
 function main() {
@@ -19,7 +32,7 @@ function main() {
   if (!currentSelection) {    // If nothing is selected, create a new textbox with placeholder text.
     Promise.resolve(
       // Load the font.
-      figma.loadFontAsync({ family: 'Roboto', style: 'Regular' })
+      figma.loadFontAsync(defaultFont)
     )
       .then(() => {
         // Create the text box.
@@ -30,28 +43,31 @@ function main() {
         node.y = figma.viewport.center.y
 
         // Customize the appearance of the text box.
-        setDefaultTextStyles(node, placeholderText)
+        setDefaultTextStyles(node, placeholderText, true)
 
         // Shift focus to the newly created text box.
         figma.currentPage.selection = [node]
       })
       .then(() => {
         figma.closePlugin()
+        return
       })
-  } else if (currentSelection.type === 'TEXT') {    // If a textbox is selected, replaces its content with placeholder text
-    // Check if all fonts are loaded.
-    if (!currentSelection.hasMissingFont) {
-      // Load all fonts in the textbox.
+  } else if (currentSelection.type === 'TEXT') {    // If a textbox is selected, replace its content with placeholder text
+    if (!currentSelection.hasMissingFont) { // Check if all fonts are loaded.
       Promise.all(
-        // If there's more than one font, load all of them.
+        // If there's more than one font, load all of them. (Only the first font will be used for applying styles)
         currentSelection.fontName === figma.mixed
-         ? currentSelection.getRangeAllFontNames(0, currentSelection.characters.length).map(font => figma.loadFontAsync(font))
-         : [figma.loadFontAsync(currentSelection.fontName)]
+          ? currentSelection.getRangeAllFontNames(0, currentSelection.characters.length).map(figma.loadFontAsync)
+          : [figma.loadFontAsync(currentSelection.fontName)]
       )
-      // TODO: if font loading fails, catch error and set default styles to textbox
+        .catch(() => {
+          throw new Error(`Could not load font.`)
+        })
         .then(() => {
-          // Replace the text content.
           currentSelection.characters = placeholderText
+          if (currentSelection.textAutoResize === "NONE") {
+            currentSelection.textAutoResize = "TRUNCATE"
+          }
         })
         .catch(error => {   // Throw an error if any of the textbox's fonts are missing.
           console.error(error)
@@ -59,12 +75,13 @@ function main() {
         })
         .then(() => {
           figma.closePlugin()
+          return
         })
     }
   } else {    // If any other element is selected, create a new textbox above that element.
     Promise.resolve(
       // Load the font.
-      figma.loadFontAsync({ family: 'Roboto', style: 'Regular' })
+      figma.loadFontAsync(defaultFont)
     )
       .then(() => {
         const node = figma.createText()
@@ -77,13 +94,14 @@ function main() {
         node.y = currentSelection.y
 
         // Customize the appearance of the text box.
-        setDefaultTextStyles(node, placeholderText)
+        setDefaultTextStyles(node, placeholderText, true)
 
         // Shift focus to the newly created text box.
         figma.currentPage.selection = [node]
       })
       .then(() => {
         figma.closePlugin()
+        return
       })
   }
 }
